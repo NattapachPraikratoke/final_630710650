@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/poll.dart';
+import '../../services/api.dart';
 import '../my_scaffold.dart';
 
 class HomePage extends StatefulWidget {
@@ -13,6 +14,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Poll>? _polls;
   var _isLoading = false;
+  bool _isError = false;
+  String _errMessage = '';
 
   @override
   void initState() {
@@ -21,7 +24,28 @@ class _HomePageState extends State<HomePage> {
   }
 
   _loadData() async {
-    // todo: Load list of polls here
+    setState(() {
+      _isLoading = true;
+      _isError = false;
+    });
+
+    await Future.delayed(const Duration(seconds: 3), () {});
+
+    try {
+      var result = await ApiClient().getAllPolls();
+      setState(() {
+        _polls = result;
+      });
+    } catch (e) {
+      setState(() {
+        _errMessage = e.toString();
+        _isError = true;
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -29,7 +53,8 @@ class _HomePageState extends State<HomePage> {
     return MyScaffold(
       body: Column(
         children: [
-          Image.network('https://cpsu-test-api.herokuapp.com/images/election.jpg'),
+          Image.network(
+              'https://cpsu-test-api.herokuapp.com/images/election.jpg'),
           Expanded(
             child: Stack(
               children: [
@@ -47,11 +72,52 @@ class _HomePageState extends State<HomePage> {
     return ListView.builder(
       itemCount: _polls!.length,
       itemBuilder: (BuildContext context, int index) {
-        // todo: Create your poll item by replacing this Container()
-        return Container();
+        final poll = _polls![index];
+        return Card(
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(poll.question),
+                ),
+              ),
+              for (var choice in poll.choices)
+                Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        // todo: handle button press
+                      },
+                      child: Text(choice),
+                    ),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // todo: handle button press
+                        },
+                        child: const Text('ดูผลโหวต'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
       },
     );
   }
+
 
   Widget _buildProgress() {
     return Container(
